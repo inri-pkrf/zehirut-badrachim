@@ -71,63 +71,6 @@ h2,
   }
 }
 
-/* עיגולי רקע דקורטיביים */
-.sleep::before,
-.sleep::after {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.sleep::before {
-  width: 95vmin;
-  height: 95vmin;
-  border: 8vmin solid var(--ink);
-  opacity: 0.08;
-  top: -34vmin;
-  left: -34vmin;
-}
-
-.sleep::after {
-  width: 70vmin;
-  height: 70vmin;
-  background: var(--ink);
-  opacity: 0.07;
-  bottom: -24vmin;
-  right: -22vmin;
-}
-
-/* קו מקווקו שמתקצר = ספירה לאחור עד המשפט הבא */
-.timer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: 0;
-  height: 1.6vmin;
-  z-index: 3;
-}
-
-.timer i {
-  display: block;
-  height: 100%;
-  background: var(--ink);
-  transform-origin: right center;
-  animation: shrink 20s linear forwards;
-  -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 3.2vmin, transparent 3.2vmin 4.8vmin);
-  mask-image: repeating-linear-gradient(90deg, #000 0 3.2vmin, transparent 3.2vmin 4.8vmin);
-}
-
-@keyframes shrink {
-  from {
-    transform: scaleX(1);
-  }
-  to {
-    transform: scaleX(0);
-  }
-}
-
 .sleep-content {
   position: relative;
   z-index: 2;
@@ -150,15 +93,6 @@ h2,
     opacity: 1;
     transform: none;
   }
-}
-
-.chip {
-  padding: 0.8vmin 3.2vmin 1vmin;
-  border: 0.5vmin solid var(--ink);
-  border-radius: 99px;
-  font-weight: 700;
-  font-size: 2.5vmin;
-  letter-spacing: 0.02em;
 }
 
 .kicker {
@@ -211,25 +145,13 @@ h2,
   transform: scale(1.06);
 }
 
-.vbtn.dim {
-  opacity: 0.4;
-}
-
-.voted .vbtn {
-  pointer-events: none;
+.vbtn:disabled {
+  opacity: 1;
 }
 
 .result {
-  min-height: 19vmin;
+  min-height: 12vmin;
   width: min(86vw, 90vmin);
-  opacity: 0;
-  transform: translateY(2vmin);
-  transition: opacity 0.5s, transform 0.5s;
-}
-
-.result.show {
-  opacity: 1;
-  transform: none;
 }
 
 .result-top {
@@ -252,50 +174,10 @@ h2,
   font-weight: 700;
 }
 
-.bar {
-  height: 2.4vmin;
-  border-radius: 99px;
-  border: 0.4vmin solid var(--ink);
-  overflow: hidden;
-}
-
-.bar i {
-  display: block;
-  height: 100%;
-  background: var(--ink);
-  transition: width 1s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.result-note {
-  font-size: 2.6vmin;
-  font-weight: 600;
-  margin-top: 1.2vmin;
-}
-
-/* פס כביש שנע בתחתית */
-.dash-strip {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1.6vmin;
-  z-index: 3;
-  opacity: 0.45;
-  background-image: linear-gradient(90deg, var(--ink) 0 7vmin, transparent 7vmin 13vmin);
-  background-size: 13vmin 100%;
-  animation: dashMove 1.2s linear infinite;
-}
-
-@keyframes dashMove {
-  to {
-    background-position: 13vmin 0;
-  }
-}
-
 /* כפתור התחלה קבוע */
 .start-btn {
   position: fixed;
-  bottom: 5.5vmin;
+  bottom: 80.5vmin;
   left: 50%;
   transform: translateX(-50%);
   z-index: 5;
@@ -311,29 +193,8 @@ h2,
   transition: background-color 0.9s, color 0.9s;
 }
 
-.start-btn::after {
-  content: '';
-  position: absolute;
-  inset: -1vmin;
-  border-radius: 99px;
-  border: 0.7vmin solid var(--accent);
-  animation: ring 1.9s ease-out infinite;
-  pointer-events: none;
-}
-
 .start-btn:active {
   transform: translateX(-50%) scale(0.96);
-}
-
-@keyframes ring {
-  from {
-    opacity: 0.9;
-    transform: scale(0.96);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.22, 1.5);
-  }
 }
 
 /* =====================================================
@@ -857,4 +718,553 @@ h2,
   font-size: calc(var(--u) * 3);
   opacity: 0.7;
   max-width: calc(var(--u) * 80);
+}
+
+/* =====================================================
+   מסך רדום: תמונות כביש וציור הרכב
+   ===================================================== */
+
+.road {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.road i {
+  position: absolute;
+  inset: -3%;
+  background-size: cover;
+  background-position: center;
+  will-change: opacity, transform;
+}
+
+/* תנועה איטית ועדינה מאוד של התמונה (אפשר למחוק את שורת ה-animation כדי שתהיה קבועה לגמרי) */
+.road-a {
+  animation: roadDrift 40s ease-in-out infinite alternate;
+}
+
+@keyframes roadDrift {
+  from { transform: scale(1); }
+  to { transform: scale(1.08); }
+}
+
+/* שכבה כהה כדי שהשאלות יישארו קריאות */
+.road-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(18, 13, 11, 0.55), rgba(18, 13, 11, 0.4) 45%, rgba(18, 13, 11, 0.7));
+}
+
+.vehicle-wrap {
+  position: absolute;
+  top: 4.5vmin;
+  right: 4.5vmin;
+  z-index: 3;
+  width: 24vmin;
+  height: 24vmin;
+  animation: rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.vehicle {
+  width: 100%;
+  height: 100%;
+  padding: 2vmin;
+  border-radius: 50%;
+  background: #fff4e4;
+  border: 0.8vmin solid #2a1b14;
+  box-shadow: 0.8vmin 1vmin 0 rgba(0, 0, 0, 0.35);
+}
+
+.sleep .kicker,
+.sleep .statement,
+.sleep .result {
+  text-shadow: 0 0.3vmin 1.6vmin rgba(0, 0, 0, 0.45);
+}
+
+/* =====================================================
+   משחק: הזנת שם ומקלדת
+   ===================================================== */
+
+.name-panel {
+  justify-content: flex-start;
+  padding-top: calc(var(--u) * 12);
+  padding-bottom: calc(var(--u) * 60);
+  gap: calc(var(--u) * 3.5);
+}
+
+.name-panel .big {
+  font-size: calc(var(--u) * 14);
+}
+
+.name-panel .btn {
+  font-size: calc(var(--u) * 9);
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 10) calc(var(--u) * 2.2);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.name-box {
+  width: 100%;
+  max-width: calc(var(--u) * 80);
+  min-height: calc(var(--u) * 16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.6);
+  background: #fff4e4;
+  color: #2a1b14;
+  border-radius: calc(var(--u) * 4);
+  border: calc(var(--u) * 0.8) solid transparent;
+  font-size: calc(var(--u) * 8);
+  font-weight: 800;
+  padding: 0 calc(var(--u) * 4);
+  overflow: hidden;
+}
+
+.name-box.focus {
+  border-color: #ffc93c;
+}
+
+.name-box .ph {
+  opacity: 0.4;
+  font-weight: 600;
+}
+
+.name-box .caret {
+  width: calc(var(--u) * 0.7);
+  height: calc(var(--u) * 9);
+  background: #2a1b14;
+  animation: caret 1s steps(2) infinite;
+}
+
+@keyframes caret {
+  50% { opacity: 0; }
+}
+
+.kb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: #d3d6dc;
+  padding: calc(var(--u) * 2) calc(var(--u) * 1.2) calc(var(--u) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.8);
+  animation: kbUp 0.22s ease-out both;
+}
+
+@keyframes kbUp {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+.kb-row {
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 1.1);
+}
+
+.key {
+  flex: 1 1 0;
+  max-width: calc(var(--u) * 9.2);
+  height: calc(var(--u) * 12);
+  border-radius: calc(var(--u) * 1.6);
+  background: #fff;
+  color: #1a1a1a;
+  font-size: calc(var(--u) * 5.6);
+  font-weight: 600;
+  box-shadow: 0 calc(var(--u) * 0.5) 0 #8d9097;
+  display: grid;
+  place-items: center;
+}
+
+.key:active {
+  background: #b9bdc5;
+  transform: translateY(calc(var(--u) * 0.4));
+}
+
+.key.wide {
+  flex: 1.5 1 0;
+  max-width: calc(var(--u) * 13);
+  background: #aab0ba;
+}
+
+.key.on {
+  background: #fff;
+}
+
+.key.wide2 {
+  flex: 0 0 calc(var(--u) * 17);
+  max-width: none;
+  background: #aab0ba;
+  font-size: calc(var(--u) * 4.6);
+}
+
+.key.done {
+  background: #ffc93c;
+  color: #2a0e04;
+  font-weight: 800;
+}
+
+.key.space {
+  flex: 1 1 0;
+  max-width: none;
+  font-size: calc(var(--u) * 4.4);
+  color: #555;
+}
+
+/* =====================================================
+   משחק: שיחה נכנסת והודעות
+   ===================================================== */
+
+.notif.call {
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.notif.call .notif-text {
+  min-width: 0;
+}
+
+.call-btns {
+  flex-basis: 100%;
+  display: flex;
+  gap: calc(var(--u) * 3);
+}
+
+.call-btn {
+  flex: 1;
+  font-weight: 800;
+  font-size: calc(var(--u) * 5);
+  padding: calc(var(--u) * 2.4);
+  border-radius: 99px;
+  color: #fff;
+}
+
+.call-btn.answer {
+  background: #2fb44a;
+}
+
+.call-btn.hang {
+  background: #e03a2f;
+}
+
+.call-btn:active {
+  filter: brightness(0.85);
+}
+
+.ring-icon {
+  animation: buzz 0.4s infinite;
+}
+
+.phone-screen.incall {
+  align-items: center;
+  text-align: center;
+  justify-content: flex-start;
+}
+
+.incall .avatar.big-avatar {
+  width: calc(var(--u) * 24);
+  height: calc(var(--u) * 24);
+  font-size: calc(var(--u) * 12);
+  margin-top: calc(var(--u) * 6);
+}
+
+.incall-name {
+  font-size: calc(var(--u) * 8);
+  font-weight: 800;
+}
+
+.incall-time {
+  font-size: calc(var(--u) * 4.6);
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.incall .bubble {
+  align-self: center;
+  text-align: center;
+}
+
+.incall .call-btn {
+  margin-top: auto;
+  width: 100%;
+  flex: none;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 2.4);
+}
+
+.bubble.mine {
+  align-self: flex-end;
+  background: #2a1b14;
+  color: #fff4e4;
+  border-radius: calc(var(--u) * 5) calc(var(--u) * 5) calc(var(--u) * 1) calc(var(--u) * 5);
+}
+
+/* =====================================================
+   משחק: עיניים נעצמות (מצמוץ איטי)
+   ===================================================== */
+
+.lid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.lid.top {
+  top: 0;
+  box-shadow: 0 calc(var(--u) * 3) calc(var(--u) * 10) calc(var(--u) * 3) #000;
+}
+
+.lid.bot {
+  bottom: 0;
+  box-shadow: 0 calc(var(--u) * -3) calc(var(--u) * 10) calc(var(--u) * 3) #000;
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.blind-meter {
+  position: absolute;
+  top: calc(var(--u) * 20);
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.blind-meter .meter {
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 5);
+}
+
+/* =====================================================
+   משחק: סיכום מתומצת והיכל תהילה
+   ===================================================== */
+
+.panel.final {
+  gap: calc(var(--u) * 3);
+}
+
+.final .big {
+  font-size: calc(var(--u) * 10.5);
+}
+
+.final .btn,
+.hall .btn {
+  font-size: calc(var(--u) * 8);
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 9) calc(var(--u) * 2);
+  white-space: nowrap;
+}
+
+.final .lead {
+  font-size: calc(var(--u) * 4.2);
+}
+
+.final .rounds li {
+  padding: calc(var(--u) * 1.3) calc(var(--u) * 4);
+  font-size: calc(var(--u) * 3.6);
+}
+
+.score-line {
+  font-size: calc(var(--u) * 4.6);
+  font-weight: 800;
+}
+
+.score-line b {
+  font-family: 'Karantina', sans-serif;
+  font-size: calc(var(--u) * 11);
+  color: #ffc93c;
+  margin-inline-start: calc(var(--u) * 1.5);
+}
+
+.one-tip {
+  font-size: calc(var(--u) * 3.8);
+  font-weight: 600;
+  max-width: calc(var(--u) * 80);
+}
+
+.panel.hall {
+  justify-content: flex-start;
+  padding-top: calc(var(--u) * 8);
+  padding-bottom: calc(var(--u) * 6);
+  gap: calc(var(--u) * 3);
+  overflow: hidden;
+}
+
+.hall .big {
+  font-size: calc(var(--u) * 17);
+  color: #ffc93c;
+}
+
+.hall-list {
+  list-style: none;
+  width: 100%;
+  max-width: calc(var(--u) * 86);
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.4);
+  touch-action: pan-y;
+}
+
+.hall-list li {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  background: rgba(18, 13, 11, 0.45);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 4);
+  border-radius: calc(var(--u) * 3.5);
+  font-weight: 700;
+  font-size: calc(var(--u) * 4.4);
+}
+
+.hall-list li.me {
+  background: #ffc93c;
+  color: #2a0e04;
+}
+
+.hall-list .rank {
+  font-family: 'Karantina', sans-serif;
+  font-size: calc(var(--u) * 7);
+  width: calc(var(--u) * 8);
+  text-align: center;
+}
+
+.hall-list .nm {
+  flex: 1;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hall-list .sc {
+  font-family: 'Karantina', sans-serif;
+  font-size: calc(var(--u) * 7.5);
+}
+
+/* שיחת הודעות ארוכה: מקטינים קצת כדי שהכל ייכנס בטלפון */
+.phone-screen.compact {
+  gap: calc(var(--u) * 2.6);
+  overflow: hidden;
+}
+
+.phone-screen.compact .bubble {
+  font-size: calc(var(--u) * 4);
+  padding: calc(var(--u) * 2.6);
+}
+
+.phone-screen.compact .reply {
+  font-size: calc(var(--u) * 4);
+  padding: calc(var(--u) * 2);
+}
+
+.phone-screen.compact .replies {
+  gap: calc(var(--u) * 1.6);
+}
+
+/* =====================================================
+   בחירת מהירות
+   ===================================================== */
+
+.speed-panel {
+  gap: calc(var(--u) * 4);
+}
+
+.speed-panel .big {
+  font-size: calc(var(--u) * 14);
+}
+
+.speed-num {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 2);
+  font-family: 'Karantina', sans-serif;
+  font-weight: 700;
+  color: #ffc93c;
+}
+
+.speed-num b {
+  font-size: calc(var(--u) * 36);
+  line-height: 0.9;
+}
+
+.speed-num span {
+  font-size: calc(var(--u) * 9);
+}
+
+.speed-row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 4);
+  width: 100%;
+  max-width: calc(var(--u) * 84);
+}
+
+.speed-step {
+  flex: none;
+  width: calc(var(--u) * 17);
+  height: calc(var(--u) * 17);
+  border-radius: 50%;
+  background: #ffc93c;
+  color: #2a0e04;
+  font-family: 'Karantina', sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 13);
+  line-height: 1;
+  box-shadow: 0 calc(var(--u) * 1) 0 #9a5b00;
+  display: grid;
+  place-items: center;
+}
+
+.speed-step:active {
+  transform: translateY(calc(var(--u) * 0.8));
+  box-shadow: 0 calc(var(--u) * 0.2) 0 #9a5b00;
+}
+
+.speed-range {
+  flex: 1;
+  height: calc(var(--u) * 8);
+  accent-color: #ffc93c;
+  direction: ltr;
+}
+
+.speed-ends {
+  direction: ltr;
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: calc(var(--u) * 84);
+  font-weight: 700;
+  font-size: calc(var(--u) * 3.4);
+  opacity: 0.8;
+}
+
+.hall-list .sp {
+  font-size: calc(var(--u) * 3);
+  font-weight: 600;
+  opacity: 0.75;
 }

@@ -1,7 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { STATEMENTS, THEMES, BASE_WEIGHT } from './data';
+import VehicleIcon from './VehicleIcon';
 
-const INTERVAL_MS = 20000; // כל כמה זמן מתחלף המשפט
+// המשפט מתחלף רק אחרי שעונים. כמה זמן מציגים את התוצאה לפני המשפט הבא:
+const RESULT_MS = 6000;
+
+// תמונת הרקע (בתיקייה public). אפשר להחליף שם קובץ או סיומת כאן.
+const ROAD_IMAGE = 'road-1.jpg';
+const roadUrl = (name) => `url(${process.env.PUBLIC_URL || ''}/${name})`;
 const STORAGE_KEY = 'rs_votes_v1';
 
 function loadVotes() {
@@ -39,22 +45,23 @@ export default function SleepScreen({ onStart }) {
 
   const statement = STATEMENTS[order[step % order.length]];
   const theme = THEMES[step % THEMES.length];
-  const prevTheme = THEMES[(((step - 1) % THEMES.length) + THEMES.length) % THEMES.length];
 
-  // מחליפים משפט + ערכת צבעים כל 20 שניות
+  // עוברים למשפט הבא (וערכת צבעים אחרת) רק אחרי שענו, ואחרי שהתוצאה הוצגה
   useEffect(() => {
+    if (!vote) return undefined;
     const id = setTimeout(() => {
       setStep((s) => s + 1);
       setVote(null);
-    }, INTERVAL_MS);
+    }, RESULT_MS);
     return () => clearTimeout(id);
-  }, [step]);
+  }, [vote]);
 
   const counts = votes[statement.id] || { yes: 0, no: 0 };
-  const pct = Math.round(
+  const yesPct = Math.round(
     (100 * ((statement.base / 100) * BASE_WEIGHT + counts.yes)) /
       (BASE_WEIGHT + counts.yes + counts.no)
   );
+  const pct = vote === 'no' ? 100 - yesPct : yesPct;
 
   const cast = (answer) => {
     if (vote) return;
@@ -73,7 +80,7 @@ export default function SleepScreen({ onStart }) {
   const cssVars = {
     '--bg1': theme.bg1,
     '--bg2': theme.bg2,
-    '--ink': theme.ink,
+    '--ink': '#FFF4E4', // טקסט בהיר קבוע, כי הרקע הוא תמונת כביש כהה
     '--yes': theme.yes,
     '--yesInk': theme.yesInk,
     '--no': theme.no,
@@ -82,55 +89,52 @@ export default function SleepScreen({ onStart }) {
     '--accentInk': theme.accentInk,
   };
 
-  const note =
-    vote === 'yes'
-      ? 'אתם לא לבד. וזה בדיוק הסיבה לשים לב.'
-      : vote === 'no'
-      ? 'יופי. אבל מי שאמר "קרה לי" לא תכנן שזה יקרה.'
-      : '';
-
   return (
-    <div className={'sleep' + (vote ? ' voted' : '')} style={cssVars}>
-      <div className="bg" style={{ background: gradient(prevTheme) }} />
-      <div className="bg bg-cur" key={'bg' + step} style={{ background: gradient(theme) }} />
+    <div className="sleep" style={cssVars}>
+      {/* רקע גיבוי (אם התמונות חסרות) */}
+      <div className="bg" style={{ background: gradient(theme) }} />
 
-      <div className="timer" aria-hidden="true">
-        <i key={'t' + step} />
+      {/* תמונת כביש קבועה, עם תנועה איטית ועדינה מאוד */}
+      <div className="road" aria-hidden="true">
+        <i className="road-a" style={{ backgroundImage: roadUrl(ROAD_IMAGE) }} />
+        <b className="road-shade" />
+      </div>
+
+      <div className="vehicle-wrap" key={'v' + step}>
+        <VehicleIcon who={statement.who} />
       </div>
 
       <div className="sleep-content" key={'c' + step}>
-        <span className="chip">{statement.who}</span>
         <h1 className="kicker">קרה לך?</h1>
         <p className="statement">{statement.text}</p>
 
         <div className="vote-row">
           <button
-            className={'vbtn yes' + (vote === 'yes' ? ' chosen' : vote ? ' dim' : '')}
+            className={'vbtn yes' + (vote === 'yes' ? ' chosen' : '')}
+            disabled={Boolean(vote)}
             onClick={() => cast('yes')}
           >
             קרה לי
           </button>
           <button
-            className={'vbtn no' + (vote === 'no' ? ' chosen' : vote ? ' dim' : '')}
+            className={'vbtn no' + (vote === 'no' ? ' chosen' : '')}
+            disabled={Boolean(vote)}
             onClick={() => cast('no')}
           >
             לא קרה לי
           </button>
         </div>
 
-        <div className={'result' + (vote ? ' show' : '')} aria-live="polite">
-          <div className="result-top">
-            <span className="pct">{pct}%</span>
-            <span className="result-label">מהמשיבים אמרו שקרה להם</span>
+        {vote && (
+          <div className="result" aria-live="polite">
+            <div className="result-top">
+              <span className="pct">{pct}%</span>
+              <span className="result-label">מהאנשים בחרו כמוך</span>
+            </div>
           </div>
-          <div className="bar">
-            <i style={{ width: vote ? pct + '%' : '0%' }} />
-          </div>
-          <p className="result-note">{note}</p>
-        </div>
+        )}
       </div>
 
-      <div className="dash-strip" aria-hidden="true" />
       <button className="start-btn" onClick={onStart}>
         התחלה
       </button>
