@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/zehirut-badrachim/static/css/main.1a9f8fd8.css",
-    "main.js": "/zehirut-badrachim/static/js/main.c4406428.js",
+    "main.css": "/zehirut-badrachim/static/css/main.ff56e045.css",
+    "main.js": "/zehirut-badrachim/static/js/main.01ec92b6.js",
     "static/media/assistant-latin-700-normal.woff": "/zehirut-badrachim/static/media/assistant-latin-700-normal.6e0532b8412176c81044.woff",
     "static/media/assistant-latin-400-normal.woff": "/zehirut-badrachim/static/media/assistant-latin-400-normal.02f27e42bfe570ee9f0a.woff",
     "static/media/assistant-latin-600-normal.woff": "/zehirut-badrachim/static/media/assistant-latin-600-normal.cc96037adb621c498de8.woff",
@@ -45,11 +45,11 @@
     "static/media/karantina-latin-ext-300-normal.woff": "/zehirut-badrachim/static/media/karantina-latin-ext-300-normal.379a2c1cfc3401a73e8a.woff",
     "static/media/karantina-latin-ext-700-normal.woff": "/zehirut-badrachim/static/media/karantina-latin-ext-700-normal.62591ea90fb48c6d7b82.woff",
     "index.html": "/zehirut-badrachim/index.html",
-    "main.1a9f8fd8.css.map": "/zehirut-badrachim/static/css/main.1a9f8fd8.css.map",
-    "main.c4406428.js.map": "/zehirut-badrachim/static/js/main.c4406428.js.map"
+    "main.ff56e045.css.map": "/zehirut-badrachim/static/css/main.ff56e045.css.map",
+    "main.01ec92b6.js.map": "/zehirut-badrachim/static/js/main.01ec92b6.js.map"
   },
   "entrypoints": [
-    "static/css/main.1a9f8fd8.css",
-    "static/js/main.c4406428.js"
+    "static/css/main.ff56e045.css",
+    "static/js/main.01ec92b6.js"
   ]
 }
