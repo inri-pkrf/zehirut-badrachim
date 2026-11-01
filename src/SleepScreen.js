@@ -2,8 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { STATEMENTS, THEMES, BASE_WEIGHT } from './data';
 import VehicleIcon from './VehicleIcon';
 
-// המשפט מתחלף רק אחרי שעונים. כמה זמן מציגים את התוצאה לפני המשפט הבא:
-const RESULT_MS = 6000;
+// המשפט מתחלף רק אחרי שעונים: שלוש שניות של תוצאה, ואז המשפט הבא.
+const RESULT_MS = 3000;
 
 // תמונת הרקע (בתיקייה public). אפשר להחליף שם קובץ או סיומת כאן.
 const ROAD_IMAGE = 'road-1.jpg';
@@ -44,7 +44,7 @@ export default function SleepScreen({ onStart }) {
   const [votes, setVotes] = useState(loadVotes);
 
   const statement = STATEMENTS[order[step % order.length]];
-  const theme = THEMES[step % THEMES.length];
+  const theme = THEMES[0]; // ערכת צבעים קבועה, לא מתחלפת בין משפטים
 
   // עוברים למשפט הבא (וערכת צבעים אחרת) רק אחרי שענו, ואחרי שהתוצאה הוצגה
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function SleepScreen({ onStart }) {
       </div>
 
       <div className="vehicle-wrap" key={'v' + step}>
-        <VehicleIcon who={statement.who} />
+        <VehicleIcon who={statement.who} text={statement.text} />
       </div>
 
       <div className="sleep-content" key={'c' + step}>
@@ -131,6 +131,7 @@ export default function SleepScreen({ onStart }) {
               <span className="pct">{pct}%</span>
               <span className="result-label">מהאנשים בחרו כמוך</span>
             </div>
+            {statement.fact && <div className="result-fact">{statement.fact}</div>}
           </div>
         )}
       </div>

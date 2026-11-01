@@ -182,16 +182,47 @@ export function stopAllSounds() {
   activeSources.clear();
 }
 
-/* חריקת בלמים: רעש מסונן שיורד בתדר + צווחה דקה. dur בשניות */
+/* חריקת בלמים: נשמעת מרגע הלחיצה על הבלם ועד שמופיעה ההודעה "עצרתם" (stopScreech) */
+let screechAudio = null;
+let screechGain = null;
+
+export function stopScreech() {
+  if (screechAudio) {
+    stopAudio(screechAudio);
+    screechAudio = null;
+  }
+  if (screechGain) {
+    try {
+      screechGain.gain.setValueAtTime(0, screechGain.context.currentTime);
+      screechGain.disconnect();
+    } catch (e) {
+      /* כבר נותק */
+    }
+    screechGain = null;
+  }
+}
+
 export function playScreech(dur = 1.6) {
   const generation = soundGeneration;
+  stopScreech();
   tryFile('brake', false)
     .then((audio) => {
       if (generation !== soundGeneration) stopAudio(audio);
+      else screechAudio = audio;
     })
     .catch(() => {
       if (generation === soundGeneration) synthScreech(dur);
     });
+}
+
+/* צופרים מאחור: שלוש צפירות קצרות */
+export function playHorn() {
+  const c = ac();
+  if (!c) return;
+  const t = c.currentTime;
+  [0, 0.5, 1.0].forEach((d) => {
+    [415, 523].forEach((f) => tone(c, c.destination, f, t + d, 0.38, 'sawtooth', 0.09));
+  });
 }
 
 function synthScreech(dur) {
@@ -199,7 +230,10 @@ function synthScreech(dur) {
   if (!c) return;
   const t = c.currentTime;
   const len = Math.max(0.4, dur);
-
+  screechGain = c.createGain();
+  screechGain.gain.value = 1;
+  screechGain.connect(c.destination);
+  const out = screechGain;
   const buf = c.createBuffer(1, c.sampleRate * 2, c.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
@@ -222,7 +256,7 @@ function synthScreech(dur) {
 
   noise.connect(band);
   band.connect(g);
-  g.connect(c.destination);
+  g.connect(out);
   noise.start(t);
   noise.stop(t + len + 0.05);
 
@@ -238,7 +272,7 @@ function synthScreech(dur) {
     og.gain.exponentialRampToValueAtTime(0.05, t + 0.08);
     og.gain.exponentialRampToValueAtTime(0.0001, t + len);
     o.connect(og);
-    og.connect(c.destination);
+    og.connect(out);
     o.start(t);
     o.stop(t + len + 0.05);
   });

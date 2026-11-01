@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import RoadScene from './RoadScene';
+import RoadScene, { CabinFrame } from './RoadScene';
 import Keyboard from './Keyboard';
-import { unlockAudio, playNotify, startRing, stopRing, stopAllSounds, playScreech } from './sounds';
+import { unlockAudio, playNotify, startRing, stopRing, stopAllSounds, playScreech, stopScreech, playHorn } from './sounds';
 import {
-  ROUNDS,
+  pickRounds,
   THREADS,
   CALLERS,
   DECEL,
@@ -27,11 +27,15 @@ const m = (x) => Math.max(0, Math.round(x));
 // כמה שניות בין הודעה להודעה כשהטלפון פתוח
 const MSG_GAP = 1.0;
 
-/* מצמוץ איטי (שניות מתחילת הסיבוב): העיניים נסגרות, נשארות עצומות, ונפתחות */
-const BLINK = { START: 1.5, CLOSE: 2.2, HOLD: 1.3, OPEN: 0.8, SPAWN: 3.9, SEE: 5.3 };
+/* תזמוני "איבוד ראייה" (שניות מתחילת הסיבוב):
+   eyes = עיניים נעצמות לאט. glare = צופרים ואורות גבוהים מאחור (סנוור מהיר). */
+const BLINKS = {
+  eyes: { START: 1.5, CLOSE: 2.2, HOLD: 1.3, OPEN: 0.8, SPAWN: 3.9, SEE: 5.3 },
+  glare: { START: 1.5, CLOSE: 0.4, HOLD: 2.3, OPEN: 1.0, SPAWN: 3.2, SEE: 5.2 },
+};
 const ease = (x) => x * x * (3 - 2 * x);
-function darkAt(t) {
-  const { START, CLOSE, HOLD, OPEN } = BLINK;
+function darkAt(t, B) {
+  const { START, CLOSE, HOLD, OPEN } = B;
   if (t < START) return 0;
   if (t < START + CLOSE) return ease((t - START) / CLOSE);
   if (t < START + CLOSE + HOLD) return 1;
@@ -75,7 +79,7 @@ function useIdle(ms, cb) {
 
 function createSim(round) {
   return {
-    cfg: { ...round, gap: calcGap(round.speed) },
+    cfg: { ...round, gap: calcGap(round.speed), B: BLINKS[round.timing] || BLINKS.eyes },
     t: 0,
     pos: 0,
     v: round.speed / 3.6,
@@ -91,6 +95,10 @@ function createSim(round) {
     phoneOpenT: null,
     phoneOpenPos: null,
     travel: null,
+    evIdx: 0,
+    nextAt: 1.5,
+    evOpened: false,
+    everOpened: false,
     brakeT: null,
     brakePos: null,
     reaction: null,
@@ -110,11 +118,19 @@ function createSim(round) {
 function closePhone(S) {
   if (!S.phoneOpen) return;
   S.phoneOpen = false;
-  S.travel = S.pos - S.phoneOpenPos;
+  S.travel = (S.travel || 0) + (S.pos - S.phoneOpenPos);
   if (S.obstacleAbs != null && S.seeT == null) {
     S.seeT = S.t;
     S.seePos = S.pos;
   }
+}
+
+function openPhoneSim(S) {
+  S.phoneOpen = true;
+  S.phoneOpenT = S.t;
+  S.phoneOpenPos = S.pos;
+  S.evOpened = true;
+  S.everOpened = true;
 }
 
 function finish(S, stopped) {
@@ -132,13 +148,37 @@ function step(S, dt) {
   if (S.obstacleAbs == null) {
     let spawn = false;
     if (cfg.blink) {
-      spawn = S.t >= BLINK.SPAWN;
+      spawn = S.t >= cfg.B.SPAWN;
     } else if (!cfg.distracted) {
       spawn = S.t >= 2.5;
     } else {
-      if (S.bannerAt == null && S.t >= 1.5) S.bannerAt = S.t;
-      if (S.phoneOpenT != null) spawn = S.t >= S.phoneOpenT + 0.8;
-      else if (S.bannerAt != null) spawn = S.t >= S.bannerAt + 3.5;
+      const evs = cfg.events;
+      const last = S.evIdx >= evs.length - 1;
+      if (S.bannerAt == null && S.t >= S.nextAt) {
+        S.bannerAt = S.t;
+        // הודעות על המסך: נפתחות מעצמן ונסגרות מעצמן
+        if (cfg.overlay) {
+          openPhoneSim(S);
+          const total = THREADS[evs[S.evIdx].thread].length;
+          S.glanceUntil = S.t + Math.max(2.5, total * MSG_GAP + 1.3);
+        }
+      }
+      if (S.bannerAt != null) {
+        if (!last) {
+          // אירוע שהסתיים (נסגר הטלפון, או שהתעלמו ממנו) והבא אחריו מתחיל מיד
+          const done = S.evOpened ? !S.phoneOpen : S.t >= S.bannerAt + 3.5;
+          if (done) {
+            S.evIdx += 1;
+            S.bannerAt = null;
+            S.evOpened = false;
+            S.sent = [];
+            S.callMode = null;
+            S.glanceUntil = null;
+            S.nextAt = S.t + 0.8;
+          }
+        } else if (S.evOpened) spawn = S.t >= S.phoneOpenT + (cfg.spawnOff || 0.8);
+        else spawn = S.t >= S.bannerAt + 3.5;
+      }
     }
     if (spawn) {
       S.obstacleAbs = S.pos + cfg.gap;
@@ -152,8 +192,8 @@ function step(S, dt) {
 
   // עיניים עצומות: מתחילים למדוד כשהמסך כבר חשוך, ורואים שוב כשהעיניים נפתחות
   if (cfg.blink) {
-    if (S.blindPos == null && S.t >= BLINK.START + BLINK.CLOSE * 0.5) S.blindPos = S.pos;
-    if (!S.blindDone && S.t >= BLINK.SEE) {
+    if (S.blindPos == null && S.t >= cfg.B.START + cfg.B.CLOSE * 0.5) S.blindPos = S.pos;
+    if (!S.blindDone && S.t >= cfg.B.SEE) {
       S.blindDone = true;
       S.travel = S.pos - S.blindPos;
       if (S.obstacleAbs != null && S.seeT == null) {
@@ -167,8 +207,8 @@ function step(S, dt) {
   if (S.glanceUntil != null && S.phoneOpen && S.t >= S.glanceUntil) closePhone(S);
 
   // כשהטלפון פתוח, ההודעות מגיעות אחת אחרי השנייה (כל שנייה)
-  if (S.phoneOpen && cfg.kind === 'msg') {
-    const total = THREADS[cfg.thread].length;
+  if (S.phoneOpen && cfg.events && cfg.events[S.evIdx].t === 'msg') {
+    const total = THREADS[cfg.events[S.evIdx].thread].length;
     S.chatIdx = Math.min(total - 1, Math.floor((S.t - S.phoneOpenT) / MSG_GAP));
   }
 
@@ -192,7 +232,7 @@ function snapshot(S) {
     dObs: S.obstacleAbs != null ? S.obstacleAbs - S.pos : null,
     phoneOpen: S.phoneOpen,
     trav: S.phoneOpen ? S.pos - S.phoneOpenPos : S.travel || 0,
-    banner: S.bannerAt != null && S.phoneOpenT == null && S.obstacleAbs == null,
+    banner: S.bannerAt != null && !S.evOpened && S.obstacleAbs == null && !S.cfg.overlay,
     canBrake:
       S.obstacleAbs != null && !S.phoneOpen && !S.ended && !S.braking && (!S.cfg.blink || S.blindDone),
     chatIdx: S.chatIdx,
@@ -200,7 +240,8 @@ function snapshot(S) {
     chatPending: S.chatPending,
     callMode: S.callMode,
     callSec: S.phoneOpenT != null ? S.t - S.phoneOpenT : 0,
-    dark: S.cfg.blink ? darkAt(S.t) : 0,
+    dark: S.cfg.blink ? darkAt(S.t, S.cfg.B) : 0,
+    evIdx: S.evIdx,
     blindTrav: S.cfg.blink && S.blindPos != null && !S.blindDone ? S.pos - S.blindPos : null,
     ended: S.ended,
     stopped: S.stopped,
@@ -232,7 +273,7 @@ function buildResult(S) {
     reactionSec: S.reaction,
     braked: S.brakePos != null,
     distraction: S.travel,
-    ignoredPhone: S.cfg.distracted && S.phoneOpenT == null,
+    ignoredPhone: S.cfg.distracted && !S.everOpened,
   };
 }
 
@@ -269,35 +310,49 @@ function Round({ round, onDone }) {
 
   const S = sim.current;
   const cfg = S.cfg;
-  const thread = cfg.kind === 'msg' ? THREADS[cfg.thread] : null;
-  const caller = cfg.kind === 'call' ? CALLERS[cfg.caller] : null;
+  const ev = cfg.events ? cfg.events[Math.min(view.evIdx, cfg.events.length - 1)] : null;
+  const thread = ev && ev.t === 'msg' ? THREADS[ev.thread] : null;
+  const caller = ev && ev.t === 'call' ? CALLERS[ev.caller] : null;
+  const hornDone = useRef(false);
   const first = thread ? thread[0] : null;
   const current = thread ? thread[Math.min(view.chatIdx, thread.length - 1)] : null;
 
   // צלילים: צלצול הודעה, או צלצול טלפון שנמשך עד שעונים / מנתקים / מתעלמים
   useEffect(() => {
     if (!view.banner) return undefined;
-    if (cfg.kind === 'call') {
+    if (ev && ev.t === 'call') {
       startRing();
       return () => stopRing();
     }
     playNotify();
     return undefined;
-  }, [view.banner, cfg.kind]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view.banner, view.evIdx]);
+
+  // החריקה נמשכת עד שמופיעה ההודעה "עצרתם" (או "פגיעה")
+  useEffect(() => {
+    if (view.ended) stopScreech();
+  }, [view.ended]);
+
+  // צופרים מאחור, פעם אחת, ברגע שהסנוור מתחיל
+  useEffect(() => {
+    if (cfg.glare && view.dark > 0 && !hornDone.current) {
+      hornDone.current = true;
+      playHorn();
+    }
+  }, [view.dark, cfg.glare]);
 
   useEffect(() => () => stopAllSounds(), []);
 
   // צלצול הודעה על כל הודעה שמגיעה בתוך הטלפון (חוץ מהראשונה)
   useEffect(() => {
-    if (thread && view.phoneOpen && view.chatIdx > 0) playNotify();
+    if (thread && view.phoneOpen && (view.chatIdx > 0 || cfg.overlay)) playNotify();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view.chatIdx]);
+  }, [view.chatIdx, view.phoneOpen]);
 
   const openPhone = () => {
     if (S.ended || S.phoneOpen || S.obstacleAbs != null) return;
-    S.phoneOpen = true;
-    S.phoneOpenT = S.t;
-    S.phoneOpenPos = S.pos;
+    openPhoneSim(S);
   };
 
   const answerCall = () => {
@@ -333,14 +388,19 @@ function Round({ round, onDone }) {
     S.brakeT = S.t;
     S.brakePos = S.pos;
     S.reaction = S.t - S.seeT;
-    playScreech(Math.min(2.2, S.v / DECEL));
+    playScreech(S.v / DECEL);
   };
 
   const mmss = '0:' + String(Math.floor(view.callSec)).padStart(2, '0');
 
   return (
     <div className={'round' + (view.ended && !view.stopped ? ' hit' : '')}>
-      <RoadScene pos={view.pos} dObs={view.phoneOpen ? null : view.dObs} crashed={view.ended && !view.stopped} />
+      <RoadScene
+        pos={view.pos}
+        dObs={view.phoneOpen ? null : view.dObs}
+        crashed={view.ended && !view.stopped}
+        glow={cfg.glare ? view.dark : 0}
+      />
 
       <div className="hud">
         <span className="hud-num">{Math.round(view.kmh)}</span>
@@ -376,7 +436,24 @@ function Round({ round, onDone }) {
         </div>
       )}
 
-      {view.phoneOpen && thread && (
+      {view.phoneOpen && thread && cfg.overlay && (
+        <div className="ov">
+          <div className="meter">
+            נסעתם <b>{m(view.trav)} מ'</b> בלי להסתכל על הכביש
+          </div>
+          {thread.slice(0, view.chatIdx + 1).map((st, i) => (
+            <div className="ov-card" key={i}>
+              <span className="avatar">{st.initial}</span>
+              <span className="notif-text">
+                <b>{st.from}</b>
+                <span>{st.text}</span>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {view.phoneOpen && thread && !cfg.overlay && (
         <div className="phone">
           <div className={'phone-screen' + (thread.length > 1 ? ' compact' : '')}>
             <div className="meter">
@@ -436,7 +513,13 @@ function Round({ round, onDone }) {
         </button>
       )}
 
-      {cfg.blink && view.dark > 0 && (
+      {cfg.glare && view.dark > 0 && (
+        <div className="glare" style={{ opacity: view.dark * 0.92 }}>
+          <i className="glare-pulse" />
+        </div>
+      )}
+
+      {cfg.blink && !cfg.glare && view.dark > 0 && (
         <>
           <div className="lid top" style={{ height: view.dark * 50 + '%' }} />
           <div className="lid bot" style={{ height: view.dark * 50 + '%' }} />
@@ -447,7 +530,7 @@ function Round({ round, onDone }) {
       {view.blindTrav != null && (
         <div className="blind-meter">
           <div className="meter">
-            נסעתם <b>{m(view.blindTrav)} מ'</b> בעיניים עצומות
+            נסעתם <b>{m(view.blindTrav)} מ'</b> {cfg.glare ? 'בלי לראות את הכביש' : 'בעיניים עצומות'}
           </div>
         </div>
       )}
@@ -463,18 +546,11 @@ function Round({ round, onDone }) {
 
 /* ---------------- מסכים ---------------- */
 
-const KIND_LABEL = {
-  base: 'בלי הסחות',
-  msg: 'עם הודעות',
-  call: 'שיחה נכנסת',
-  blink: 'עיניים נעצמות',
-};
-
 function Intro({ onGo, onBack }) {
   useIdle(60000, onBack);
   return (
-    <div className="panel">
-      <span className="eyebrow">משחק</span>
+    <div className="panel has-cabin">
+      <CabinFrame />
       <h1 className="big">שניות של חוסר תשומת לב</h1>
       <p className="lead">
         כמה רחוק מגיעים בלי להסתכל על הכביש? חמש רמות קצרות, ותראו את זה במו עיניכם.
@@ -485,9 +561,6 @@ function Intro({ onGo, onBack }) {
       </div>
       <button className="btn" onClick={onGo}>
         יוצאים לדרך
-      </button>
-      <button className="btn ghost" onClick={onBack}>
-        חזרה
       </button>
     </div>
   );
@@ -518,10 +591,6 @@ function NameEntry({ onGo, onBack }) {
         {kb && <i className="caret" />}
       </div>
 
-      <button className="btn" disabled={!ready} onClick={() => onGo(name.trim())}>
-        יאללה
-      </button>
-
       {kb && (
         <Keyboard
           onKey={(ch) => setName((n) => (n.length < NAME_MAX ? n + ch : n))}
@@ -529,6 +598,10 @@ function NameEntry({ onGo, onBack }) {
           onDone={() => setKb(false)}
         />
       )}
+
+      <button className="btn" disabled={!ready} onClick={() => onGo(name.trim())}>
+        יאללה
+      </button>
     </div>
   );
 }
@@ -578,12 +651,12 @@ function SpeedPick({ value, onChange, onGo, onBack }) {
 
 function Brief({ round, onGo }) {
   return (
-    <div className="panel">
+    <div className="panel has-cabin">
+      <CabinFrame />
       <span className="eyebrow">{round.tag}</span>
       <h1 className="big">{round.title}</h1>
       <div className="facts">
         <span>{round.speed} קמ"ש</span>
-        <span>{KIND_LABEL[round.kind]}</span>
       </div>
       <p className="lead">{round.brief.replace('{speed}', round.speed)}</p>
       <button className="btn" onClick={onGo}>
@@ -744,6 +817,7 @@ export default function Game({ onExit }) {
   const [phase, setPhase] = useState('intro');
   const [ri, setRi] = useState(0);
   const [results, setResults] = useState([]);
+  const [rounds, setRounds] = useState(() => pickRounds());
   const [last, setLast] = useState(null);
   const [attempt, setAttempt] = useState(0);
   const [player, setPlayer] = useState('');
@@ -758,6 +832,7 @@ export default function Game({ onExit }) {
     unlockAudio();
     setRi(0);
     setResults([]);
+    setRounds(pickRounds());
     setAttempt((a) => a + 1);
     setPhase('name');
   }, []);
@@ -786,7 +861,7 @@ export default function Game({ onExit }) {
   };
 
   const next = () => {
-    if (ri + 1 >= ROUNDS.length) {
+    if (ri + 1 >= rounds.length) {
       finishGame();
     } else {
       setRi(ri + 1);
@@ -797,6 +872,13 @@ export default function Game({ onExit }) {
   return (
     <div className="game">
       <div className="stage">
+        {['intro', 'name', 'speed'].includes(phase) && (
+          <button className="back-ico" onClick={onExit} aria-label="חזרה">
+            <svg viewBox="0 0 24 24" width="100%" height="100%" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        )}
         {phase === 'intro' && <Intro onGo={start} onBack={onExit} />}
         {phase === 'name' && <NameEntry onGo={begin} onBack={onExit} />}
         {phase === 'speed' && (
@@ -812,7 +894,7 @@ export default function Game({ onExit }) {
         )}
         {phase === 'brief' && (
           <Brief
-            round={{ ...ROUNDS[ri], speed }}
+            round={{ ...rounds[ri], speed }}
             onGo={() => {
               unlockAudio();
               setPhase('run');
@@ -820,10 +902,10 @@ export default function Game({ onExit }) {
           />
         )}
         {phase === 'run' && (
-          <Round key={attempt + '-' + ri} round={{ ...ROUNDS[ri], speed }} onDone={handleDone} />
+          <Round key={attempt + '-' + ri} round={{ ...rounds[ri], speed }} onDone={handleDone} />
         )}
         {phase === 'result' && last && (
-          <Result r={last} isLast={ri + 1 >= ROUNDS.length} onNext={next} />
+          <Result r={last} isLast={ri + 1 >= rounds.length} onNext={next} />
         )}
         {phase === 'final' && (
           <Final results={results} total={total} onNext={() => setPhase('hall')} onExit={onExit} />

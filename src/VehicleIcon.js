@@ -50,31 +50,106 @@ function Pedestrian() {
   );
 }
 
-function Bike() {
+const JEANS = '#34476B';
+const SHIRT = '#B7F34D';
+
+function Spokes({ cx, cy, r }) {
   return (
-    <g strokeLinejoin="round" strokeLinecap="round" fill="none">
-      <ellipse cx="60" cy="108" rx="46" ry="4" fill="rgba(0,0,0,.2)" stroke="none" />
-      <circle cx="28" cy="88" r="19" stroke={INK} strokeWidth="4.5" />
-      <circle cx="94" cy="88" r="19" stroke={INK} strokeWidth="4.5" />
-      <path d="M28 88 L48 62 L80 62 L94 88 M48 62 L58 88 L28 88 M58 88 L80 62" stroke="#FF5A3C" strokeWidth="4.5" />
-      <path d="M44 57 L56 57" stroke={INK} strokeWidth="5" />
-      <path d="M80 62 L77 48 L88 46" stroke={INK} strokeWidth="4.5" />
-      {/* רוכב עם קסדה */}
-      <line x1="52" y1="56" x2="62" y2="36" stroke="#B7F34D" strokeWidth="9" />
-      <line x1="62" y1="40" x2="82" y2="48" stroke="#B7F34D" strokeWidth="6" />
-      <line x1="52" y1="56" x2="64" y2="78" stroke={INK} strokeWidth="7" />
-      <circle cx="65" cy="27" r="8.5" fill={SKIN} stroke={INK} strokeWidth="3" />
-      <path d="M56.5 26 Q57 15 66 15.5 Q74 17 73.5 26 Z" fill="#FFD23F" stroke={INK} strokeWidth="3" />
+    <g stroke="#9AA0A8" strokeWidth="1.1">
+      {[0, 30, 60, 90, 120, 150].map((a) => {
+        const rad = (a * Math.PI) / 180;
+        return (
+          <line
+            key={a}
+            x1={cx - Math.cos(rad) * r}
+            y1={cy - Math.sin(rad) * r}
+            x2={cx + Math.cos(rad) * r}
+            y2={cy + Math.sin(rad) * r}
+          />
+        );
+      })}
     </g>
   );
 }
 
-export default function VehicleIcon({ who }) {
+function Helmet({ x, y }) {
+  return (
+    <g>
+      <circle cx={x} cy={y} r="8" fill={SKIN} stroke={INK} strokeWidth="2.2" />
+      <path
+        d={`M${x - 9.5} ${y - 1} Q${x - 9} ${y - 12} ${x} ${y - 11.5} Q${x + 9.5} ${y - 11} ${x + 9.5} ${y - 1} Z`}
+        fill="#FFD23F"
+        stroke={INK}
+        strokeWidth="2.2"
+        strokeLinejoin="round"
+      />
+      <circle cx={x + 3.2} cy={y + 0.5} r="1.1" fill={INK} stroke="none" />
+    </g>
+  );
+}
+
+/* אופניים: גלגלים עם חישורים, שלדה, רוכב עם קסדה שדוושת */
+function Bike() {
+  return (
+    <g strokeLinejoin="round" strokeLinecap="round" fill="none">
+      <ellipse cx="60" cy="108" rx="46" ry="3.5" fill="rgba(0,0,0,.2)" stroke="none" />
+      <circle cx="27" cy="86" r="20" stroke={INK} strokeWidth="4.5" />
+      <circle cx="27" cy="86" r="17" stroke="#C9CED6" strokeWidth="1.6" />
+      <Spokes cx={27} cy={86} r={17} />
+      <circle cx="93" cy="86" r="20" stroke={INK} strokeWidth="4.5" />
+      <circle cx="93" cy="86" r="17" stroke="#C9CED6" strokeWidth="1.6" />
+      <Spokes cx={93} cy={86} r={17} />
+      {/* שלדה */}
+      <path d="M27 86 L50 86 L44 58 L27 86 M44 58 L82 58 L50 86 M82 58 L93 86" stroke="#FF5A3C" strokeWidth="4" />
+      <path d="M82 58 L80 47" stroke={INK} strokeWidth="3.5" />
+      <path d="M72 46 Q81 43 90 47" stroke={INK} strokeWidth="3.5" />
+      <path d="M36 54 L50 54" stroke={INK} strokeWidth="5.5" />
+      <circle cx="50" cy="86" r="4" fill="#C9CED6" stroke={INK} strokeWidth="2" />
+      {/* רגל: ירך, שוק ונעל */}
+      <path d="M44 55 L60 70 L55 90" stroke={JEANS} strokeWidth="8" />
+      <path d="M50 94 L61 94" stroke={INK} strokeWidth="4.5" />
+      {/* גוף וזרוע */}
+      <path d="M44 54 L60 32" stroke={SHIRT} strokeWidth="12" />
+      <path d="M58 36 L81 46" stroke={SHIRT} strokeWidth="6" />
+      <circle cx="83" cy="47" r="3.2" fill={SKIN} stroke="none" />
+      <Helmet x={66} y={21} />
+    </g>
+  );
+}
+
+/* קורקינט חשמלי: מרכב עם סוללה, רוכב עומד על המשטח */
+function Scooter() {
+  return (
+    <g strokeLinejoin="round" strokeLinecap="round" fill="none">
+      <ellipse cx="60" cy="108" rx="44" ry="3.5" fill="rgba(0,0,0,.2)" stroke="none" />
+      <circle cx="24" cy="98" r="10" fill="#2A2F38" stroke={INK} strokeWidth="3" />
+      <circle cx="24" cy="98" r="3.5" fill="#C9CED6" stroke="none" />
+      <circle cx="96" cy="98" r="10" fill="#2A2F38" stroke={INK} strokeWidth="3" />
+      <circle cx="96" cy="98" r="3.5" fill="#C9CED6" stroke="none" />
+      <path d="M24 90 L88 90" stroke="#3B4150" strokeWidth="8" />
+      <path d="M30 90 L66 90" stroke="#FF5A3C" strokeWidth="3" />
+      <path d="M92 94 L88 42" stroke="#3B4150" strokeWidth="5" />
+      <path d="M80 40 L98 40" stroke={INK} strokeWidth="5" />
+      <circle cx="99" cy="40" r="2.6" fill="#FFD23F" stroke="none" />
+      {/* רגליים */}
+      <path d="M52 86 L55 62" stroke={JEANS} strokeWidth="8.5" />
+      <path d="M68 86 L63 62" stroke={JEANS} strokeWidth="8.5" />
+      <path d="M47 87 L58 87 M62 87 L74 87" stroke={INK} strokeWidth="5" />
+      {/* גוף וזרוע */}
+      <path d="M59 62 L62 34" stroke={SHIRT} strokeWidth="13" />
+      <path d="M64 38 L84 41" stroke={SHIRT} strokeWidth="6" />
+      <circle cx="86" cy="41" r="3.2" fill={SKIN} stroke="none" />
+      <Helmet x={63} y={23} />
+    </g>
+  );
+}
+
+export default function VehicleIcon({ who, text = '' }) {
   let art;
   if (who === 'נהגים') art = <Car />;
   else if (who === 'נוסעים') art = <Car passenger />;
   else if (who === 'הולכי רגל') art = <Pedestrian />;
-  else art = <Bike />;
+  else art = text.includes('קורקינט חשמלי') ? <Scooter /> : <Bike />;
 
   return (
     <div className="vehicle" role="img" aria-label={who}>
