@@ -1468,3 +1468,22 @@ h2,
   0% { opacity: 0; }
   50% { opacity: 0.55; }
 }
+
+/* כפתור מסך מלא (פינה שמאלית עליונה, מעל כל המסכים) */
+.fs-btn {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: #0f2d52;
+  box-shadow: 0 2px 0 rgba(15, 45, 82, 0.25);
+}
+
+.fs-btn:active {
+  transform: translateY(2px);
+}

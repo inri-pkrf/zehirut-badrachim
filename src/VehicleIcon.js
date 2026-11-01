@@ -5,14 +5,18 @@ import React from 'react';
 
 const INK = '#2A1B14';
 const SKIN = '#F2C9A5';
+const SHIRT = '#7eaa80';
+const JEANS = '#34476B';
+const ACCENT = '#FF5A3C';
+const YELLOW = '#FFD23F';
 
 function Car({ passenger }) {
   return (
     <g strokeLinejoin="round" strokeLinecap="round">
-      <ellipse cx="60" cy="97" rx="48" ry="5" fill="rgba(0,0,0,.2)" />
+      <ellipse cx="60" cy="97" rx="48" ry="5" fill="rgba(0,0,0,.18)" />
       <path
         d="M12 86 L12 70 Q12 63 21 61 L38 57 L48 43 Q50 40 55 40 L80 40 Q85 40 88 44 L96 57 L105 61 Q110 63 110 70 L110 86 Z"
-        fill="#FF5A3C"
+        fill={ACCENT}
         stroke={INK}
         strokeWidth="3.5"
       />
@@ -24,7 +28,7 @@ function Car({ passenger }) {
           <path d="M71 57 L82 47" stroke={INK} strokeWidth="3" />
         </g>
       )}
-      <circle cx="106" cy="71" r="4" fill="#FFD23F" stroke={INK} strokeWidth="2" />
+      <circle cx="106" cy="71" r="4" fill={YELLOW} stroke={INK} strokeWidth="2" />
       <circle cx="35" cy="87" r="11" fill={INK} />
       <circle cx="35" cy="87" r="4.5" fill="#FFF1E0" />
       <circle cx="88" cy="87" r="11" fill={INK} />
@@ -36,22 +40,50 @@ function Car({ passenger }) {
 function Pedestrian() {
   return (
     <g strokeLinejoin="round" strokeLinecap="round">
-      <ellipse cx="60" cy="108" rx="26" ry="4" fill="rgba(0,0,0,.2)" />
-      <line x1="55" y1="72" x2="46" y2="103" stroke={INK} strokeWidth="9" />
-      <line x1="65" y1="72" x2="77" y2="101" stroke={INK} strokeWidth="9" />
-      <ellipse cx="44" cy="105" rx="8" ry="4" fill="#FF5A3C" stroke={INK} strokeWidth="2" />
-      <ellipse cx="80" cy="103" rx="8" ry="4" fill="#FF5A3C" stroke={INK} strokeWidth="2" />
-      <line x1="50" y1="45" x2="38" y2="64" stroke="#B7F34D" strokeWidth="8" />
-      <line x1="70" y1="45" x2="84" y2="60" stroke="#B7F34D" strokeWidth="8" />
-      <rect x="47" y="37" width="26" height="38" rx="11" fill="#B7F34D" stroke={INK} strokeWidth="3.5" />
-      <rect x="47" y="52" width="26" height="5" fill="#FFF8DC" />
-      <circle cx="60" cy="24" r="11" fill={SKIN} stroke={INK} strokeWidth="3.5" />
+      {/* צל */}
+      <ellipse cx="60" cy="108" rx="28" ry="4.5" fill="rgba(0,0,0,.18)" />
+
+      {/* רגליים – תנוחת הליכה */}
+      <path d="M52 68 L44 98" stroke={JEANS} strokeWidth="9" />
+      <path d="M68 68 L78 96" stroke={JEANS} strokeWidth="9" />
+
+      {/* נעליים */}
+      <ellipse cx="42" cy="102" rx="9" ry="4.5" fill={ACCENT} stroke={INK} strokeWidth="2.2" />
+      <ellipse cx="81" cy="100" rx="9" ry="4.5" fill={ACCENT} stroke={INK} strokeWidth="2.2" />
+
+      {/* גוף */}
+      <path
+        d="M48 42 Q48 36 60 36 Q72 36 72 42 L72 70 Q72 76 60 76 Q48 76 48 70 Z"
+        fill={SHIRT}
+        stroke={INK}
+        strokeWidth="3.5"
+      />
+
+      {/* חגורה קלה */}
+      <rect x="48" y="58" width="24" height="5" rx="1.5" fill="#FFF8DC" stroke="none" />
+
+      {/* ידיים – נדנוד */}
+      <path d="M48 48 L34 66" stroke={SHIRT} strokeWidth="8" />
+      <path d="M72 48 L88 62" stroke={SHIRT} strokeWidth="8" />
+
+      {/* ידיים (כפות) */}
+      <circle cx="32" cy="68" r="4.5" fill={SKIN} stroke={INK} strokeWidth="2" />
+      <circle cx="90" cy="64" r="4.5" fill={SKIN} stroke={INK} strokeWidth="2" />
+
+      {/* ראש */}
+      <circle cx="60" cy="24" r="13" fill={SKIN} stroke={INK} strokeWidth="3.5" />
+
+      {/* חיוך קטן ושמח */}
+      <path
+        d="M54 26 Q60 31 66 26"
+        fill="none"
+        stroke={INK}
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </g>
   );
 }
-
-const JEANS = '#34476B';
-const SHIRT = '#B7F34D';
 
 function Spokes({ cx, cy, r }) {
   return (
@@ -78,7 +110,7 @@ function Helmet({ x, y }) {
       <circle cx={x} cy={y} r="8" fill={SKIN} stroke={INK} strokeWidth="2.2" />
       <path
         d={`M${x - 9.5} ${y - 1} Q${x - 9} ${y - 12} ${x} ${y - 11.5} Q${x + 9.5} ${y - 11} ${x + 9.5} ${y - 1} Z`}
-        fill="#FFD23F"
+        fill={YELLOW}
         stroke={INK}
         strokeWidth="2.2"
         strokeLinejoin="round"
@@ -88,11 +120,10 @@ function Helmet({ x, y }) {
   );
 }
 
-/* אופניים: גלגלים עם חישורים, שלדה, רוכב עם קסדה שדוושת */
 function Bike() {
   return (
     <g strokeLinejoin="round" strokeLinecap="round" fill="none">
-      <ellipse cx="60" cy="108" rx="46" ry="3.5" fill="rgba(0,0,0,.2)" stroke="none" />
+      <ellipse cx="60" cy="108" rx="46" ry="3.5" fill="rgba(0,0,0,.18)" stroke="none" />
       <circle cx="27" cy="86" r="20" stroke={INK} strokeWidth="4.5" />
       <circle cx="27" cy="86" r="17" stroke="#C9CED6" strokeWidth="1.6" />
       <Spokes cx={27} cy={86} r={17} />
@@ -100,12 +131,12 @@ function Bike() {
       <circle cx="93" cy="86" r="17" stroke="#C9CED6" strokeWidth="1.6" />
       <Spokes cx={93} cy={86} r={17} />
       {/* שלדה */}
-      <path d="M27 86 L50 86 L44 58 L27 86 M44 58 L82 58 L50 86 M82 58 L93 86" stroke="#FF5A3C" strokeWidth="4" />
+      <path d="M27 86 L50 86 L44 58 L27 86 M44 58 L82 58 L50 86 M82 58 L93 86" stroke={ACCENT} strokeWidth="4" />
       <path d="M82 58 L80 47" stroke={INK} strokeWidth="3.5" />
       <path d="M72 46 Q81 43 90 47" stroke={INK} strokeWidth="3.5" />
       <path d="M36 54 L50 54" stroke={INK} strokeWidth="5.5" />
       <circle cx="50" cy="86" r="4" fill="#C9CED6" stroke={INK} strokeWidth="2" />
-      {/* רגל: ירך, שוק ונעל */}
+      {/* רגל */}
       <path d="M44 55 L60 70 L55 90" stroke={JEANS} strokeWidth="8" />
       <path d="M50 94 L61 94" stroke={INK} strokeWidth="4.5" />
       {/* גוף וזרוע */}
@@ -117,20 +148,19 @@ function Bike() {
   );
 }
 
-/* קורקינט חשמלי: מרכב עם סוללה, רוכב עומד על המשטח */
 function Scooter() {
   return (
     <g strokeLinejoin="round" strokeLinecap="round" fill="none">
-      <ellipse cx="60" cy="108" rx="44" ry="3.5" fill="rgba(0,0,0,.2)" stroke="none" />
+      <ellipse cx="60" cy="108" rx="44" ry="3.5" fill="rgba(0,0,0,.18)" stroke="none" />
       <circle cx="24" cy="98" r="10" fill="#2A2F38" stroke={INK} strokeWidth="3" />
       <circle cx="24" cy="98" r="3.5" fill="#C9CED6" stroke="none" />
       <circle cx="96" cy="98" r="10" fill="#2A2F38" stroke={INK} strokeWidth="3" />
       <circle cx="96" cy="98" r="3.5" fill="#C9CED6" stroke="none" />
       <path d="M24 90 L88 90" stroke="#3B4150" strokeWidth="8" />
-      <path d="M30 90 L66 90" stroke="#FF5A3C" strokeWidth="3" />
+      <path d="M30 90 L66 90" stroke={ACCENT} strokeWidth="3" />
       <path d="M92 94 L88 42" stroke="#3B4150" strokeWidth="5" />
       <path d="M80 40 L98 40" stroke={INK} strokeWidth="5" />
-      <circle cx="99" cy="40" r="2.6" fill="#FFD23F" stroke="none" />
+      <circle cx="99" cy="40" r="2.6" fill={YELLOW} stroke="none" />
       {/* רגליים */}
       <path d="M52 86 L55 62" stroke={JEANS} strokeWidth="8.5" />
       <path d="M68 86 L63 62" stroke={JEANS} strokeWidth="8.5" />
